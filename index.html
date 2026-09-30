@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<script>
+try{var _t=localStorage.getItem("sl-theme");if(_t==="light"||_t==="dark"){document.documentElement.setAttribute("data-theme",_t);}}catch(e){}
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>StockLens — Equity Research Terminal</title>
+<meta name="description" content="StockLens: professional stock analysis terminal with candlestick charts, technical indicators, fundamentals and research tooling." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b1220'/%3E%3Cpath d='M6 22 L12 14 L17 18 L26 7' stroke='%2322d3a6' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="26" height="26"><rect width="32" height="32" rx="9" fill="url(#bg1)"/><path d="M7 22 L12.5 14.5 L17 18.5 L25 8.5" stroke="#04140f" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2ee6a8"/><stop offset="1" stop-color="#4f8cff"/></linearGradient></defs></svg>
+      </span>
+      <span class="brand-name">StockLens<em>Terminal</em></span>
+    </div>
+
+    <div class="search" id="search">
+      <svg class="search-ico" viewBox="0 0 24 24" width="16" height="16"><path d="M11 4a7 7 0 1 0 4.2 12.6l4.1 4.1 1.4-1.4-4.1-4.1A7 7 0 0 0 11 4Zm0 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z" fill="currentColor"/></svg>
+      <input id="searchInput" type="text" placeholder="Search ticker or company…  (e.g. AAPL, NVDA, TSLA)" autocomplete="off" spellcheck="false" />
+      <kbd>/</kbd>
+      <div class="search-results" id="searchResults" hidden></div>
+    </div>
+
+    <div class="topbar-right">
+      <div class="mkt-pill" id="mktStatus"><span class="dot"></span><span id="mktText">MARKET OPEN</span></div>
+      <div class="clock" id="clock">--:--:--</div>
+      <button class="icon-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme">
+        <svg viewBox="0 0 24 24" width="17" height="17" class="ico-sun"><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0-13V2m0 20v-2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
+        <svg viewBox="0 0 24 24" width="17" height="17" class="ico-moon"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="ghost-btn" id="exportBtn" title="Export snapshot">
+        <svg viewBox="0 0 24 24" width="15" height="15"><path d="M12 3v11m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Export
+      </button>
+    </div>
+  </header>
+
+  <!-- ============ PAGE NAVIGATION ============ -->
+  <nav class="pagenav" id="pagenav" aria-label="Sections">
+    <a href="#/market" data-page="market">
+      <svg viewBox="0 0 24 24" width="15" height="15"><path d="M3 17.5 9 11l4 4 7.5-8" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 21h18" stroke="currentColor" stroke-width="1.5" opacity=".45"/></svg>
+      Market
+    </a>
+    <span class="nv-div" aria-hidden="true"></span>
+    <a href="#/stock" data-page="stock">Overview</a>
+    <a href="#/technicals" data-page="technicals">Technicals</a>
+    <a href="#/financials" data-page="financials">Financials</a>
+    <a href="#/valuation" data-page="valuation">Valuation</a>
+    <a href="#/holdings" data-page="holdings">Holdings</a>
+    <a href="#/news" data-page="news">News</a>
+    <span class="nv-spacer"></span>
+    <button class="nav-sym" id="navSym" title="Change symbol">AAPL <span class="nav-sym-chg" id="navSymChg"></span></button>
+  </nav>
+
+  <div class="shell">
+
+    <!-- ============ LEFT: WATCHLIST ============ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="side-head">
+        <h2>Watchlist</h2>
+        <div class="side-actions">
+          <button class="mini-btn" id="addWatch" title="Add current symbol">+</button>
+          <button class="mini-btn collapse-only" id="collapseSide" title="Collapse">‹</button>
+        </div>
+      </div>
+      <div class="wl-cols"><span>Symbol</span><span>Last</span><span>Chg%</span></div>
+      <div class="wl-list" id="watchlist"></div>
+      <div class="wl-foot" id="wlFoot">Live quotes · auto-refresh</div>
+    </aside>
+
+    <!-- ============ MAIN ============ -->
+    <main class="main" id="main" data-view="market">
+
+      <!-- ================= MARKET ================= -->
+      <section class="page" id="pg-market" data-view="market">
+        <div class="page-head">
+          <div class="page-titles">
+            <h1>Market</h1>
+            <p class="page-sub" id="mktSub">US equities · indices, sectors and movers</p>
+          </div>
+          <div class="page-meta">
+            <span class="src-badge" id="mktSrc">…</span>
+            <span class="page-stamp" id="mktStamp">—</span>
+          </div>
+        </div>
+
+        <div class="idx-strip" id="idxStrip"></div>
+
+        <div class="panel">
+          <div class="panel-h">
+            <h3>Sector Performance</h3>
+            <span class="panel-sub">S&amp;P 500 sectors · 1D / 5D / 1M</span>
+          </div>
+          <div class="table-wrap fin"><table class="dt" id="sectorTable"></table></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-h">
+            <h3>Market Movers</h3>
+            <span class="panel-sub" id="moversSub">Most active by turnover</span>
+          </div>
+          <div class="movers-grid">
+            <div class="mover-col">
+              <div class="mover-h up">Top gainers</div>
+              <div class="mover-list" id="moversGainers"></div>
+            </div>
+            <div class="mover-col">
+              <div class="mover-h down">Top losers</div>
+              <div class="mover-list" id="moversLosers"></div>
+            </div>
+            <div class="mover-col">
+              <div class="mover-h">Most active</div>
+              <div class="mover-list" id="moversActive"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-h">
+              <h3>Market Breadth</h3>
+              <span class="panel-sub" id="breadthSub">Advancers vs decliners</span>
+            </div>
+            <div class="breadth" id="breadth"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h">
+              <h3>Your Watchlist</h3>
+              <span class="panel-sub">Live prices · detail view</span>
+            </div>
+            <div class="table-wrap fin"><table class="dt" id="mktWatch"></table></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-h">
+            <h3>Market News</h3>
+            <span class="panel-sub">Top stories across the tape</span>
+          </div>
+          <div class="news-list" id="mktNews"></div>
+        </div>
+      </section>
+
+      <!-- ============ SHARED STOCK HEADER ============ -->
+      <section class="stock-head" id="stockHead">
+        <div class="quote-head">
+          <div class="qh-id">
+            <div class="qh-top">
+              <span class="qh-sym" id="qSym">AAPL</span>
+              <span class="qh-exch" id="qExch">NASDAQ · USD</span>
+              <span class="qh-star" id="starBtn" title="Toggle watchlist" role="button" tabindex="0">☆</span>
+            </div>
+            <div class="qh-name" id="qName">Apple Inc.</div>
+            <div class="qh-tags" id="qTags"></div>
+          </div>
+
+          <div class="qh-price">
+            <div class="qh-last" id="qPrice">0.00</div>
+            <div class="qh-chg" id="qChg">+0.00 (+0.00%)</div>
+            <div class="qh-sub" id="qSub">—</div>
+          </div>
+
+          <div class="qh-quick" id="qhQuick"></div>
+        </div>
+        <div class="data-note" id="dataNote" hidden></div>
+      </section>
+
+      <!-- ================= STOCK OVERVIEW ================= -->
+      <section class="page" id="pg-stock" data-view="stock" data-page="stock">
+        <section class="panel chart-panel">
+          <div class="toolbar">
+            <div class="seg" id="tfSeg">
+              <button data-tf="1D">1D</button>
+              <button data-tf="5D">5D</button>
+              <button data-tf="1M" class="on">1M</button>
+              <button data-tf="6M">6M</button>
+              <button data-tf="YTD">YTD</button>
+              <button data-tf="1Y">1Y</button>
+              <button data-tf="5Y">5Y</button>
+              <button data-tf="MAX">MAX</button>
+            </div>
+
+            <div class="seg" id="typeSeg">
+              <button data-type="candle" class="on" title="Candlesticks">
+                <svg viewBox="0 0 24 24" width="15" height="15"><path d="M7 4v4m0 8v4M5 8h4v8H5zM17 4v6m0 6v4M15 10h4v6h-4z" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
+              </button>
+              <button data-type="area" title="Area">
+                <svg viewBox="0 0 24 24" width="15" height="15"><path d="M3 17l5-6 4 3 5-7 4 4" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 20h18" stroke="currentColor" stroke-width="1.4" opacity=".4"/></svg>
+              </button>
+              <button data-type="line" title="Line">
+                <svg viewBox="0 0 24 24" width="15" height="15"><path d="M3 16l5-5 4 4 5-8 4 5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button data-type="hollow" title="Hollow candles">
+                <svg viewBox="0 0 24 24" width="15" height="15"><path d="M7 3v3m0 10v5M5 6h4v10H5zM17 4v4m0 8v4M15 8h4v8h-4z" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+              </button>
+            </div>
+
+            <div class="tool-div"></div>
+
+            <div class="chips" id="ovChips">
+              <button class="chip on" data-ov="sma20">SMA 20</button>
+              <button class="chip on" data-ov="sma50">SMA 50</button>
+              <button class="chip" data-ov="ema120">EMA 120</button>
+              <button class="chip" data-ov="bb">Bollinger</button>
+              <button class="chip" data-ov="vwap">VWAP</button>
+              <button class="chip" data-ov="pivot">Pivots</button>
+            </div>
+
+            <div class="tool-div"></div>
+
+            <div class="chips" id="paneChips">
+              <button class="chip on" data-pane="vol">Volume</button>
+              <button class="chip on" data-pane="rsi">RSI</button>
+              <button class="chip on" data-pane="macd">MACD</button>
+              <button class="chip" data-pane="stoch">Stoch</button>
+              <button class="chip" data-pane="atr">ATR</button>
+            </div>
+
+            <div class="toolbar-spacer"></div>
+
+            <div class="seg small" id="logSeg">
+              <button data-scale="log">Log</button>
+              <button data-scale="linear" class="on">Lin</button>
+            </div>
+            <button class="mini-btn" id="resetZoom" title="Reset view">⟲</button>
+          </div>
+
+          <div class="chart-wrap" id="chartWrap">
+            <canvas id="mainChart"></canvas>
+            <div class="chart-overlay">
+              <div class="ohlc-tip" id="ohlcTip" hidden></div>
+              <div class="chart-legend" id="chartLegend"></div>
+            </div>
+            <div class="zoom-hint">Scroll to zoom · Drag to pan · Hover for crosshair</div>
+          </div>
+        </section>
+
+        <section class="stats-grid" id="statsGrid"></section>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-h"><h3>Performance</h3><span class="panel-sub">Total return vs S&amp;P 500</span></div>
+            <div class="chart-box tall"><canvas id="cmpChart"></canvas></div>
+            <div class="perf-row" id="perfRow"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-h"><h3>Fundamental Scorecard</h3><span class="panel-sub">0–100 vs sector median</span></div>
+            <div class="chart-box tall"><canvas id="radarChart"></canvas></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-h"><h3>Quarterly Revenue &amp; Net Income</h3><span class="panel-sub">US$ · quarterly</span></div>
+            <div class="chart-box"><canvas id="finChart"></canvas></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-h"><h3>Margin Trend</h3><span class="panel-sub">Gross / Operating / Net %</span></div>
+            <div class="chart-box"><canvas id="marginChart"></canvas></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-h"><h3>Company Profile</h3><span class="panel-sub" id="profileMeta"></span></div>
+          <div class="profile" id="profile"></div>
+          <div class="profile-stats" id="profileStats"></div>
+        </div>
+      </section>
+
+      <!-- ================= TECHNICALS ================= -->
+      <section class="page" id="pg-technicals" data-view="stock" data-page="technicals">
+        <div class="page-head">
+          <div class="page-titles">
+            <h1>Technicals</h1>
+            <p class="page-sub" id="techSub">Oscillators, moving averages and levels</p>
+          </div>
+          <div class="page-meta"><span class="page-stamp" id="techStamp">—</span></div>
+        </div>
+
+        <div class="panel signal-panel">
+          <div class="panel-h"><h3>Indicator Readout</h3><span class="panel-sub">Real-time signal engine</span></div>
+          <div class="signal-strip" id="signalStrip"></div>
+          <div class="signal-summary" id="signalSummary"></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-h"><h3>Oscillators</h3><span class="panel-sub">14-period unless noted</span></div>
+            <div class="table-wrap"><table class="dt" id="oscTable"></table></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><h3>Moving Averages</h3><span class="panel-sub">Simple &amp; exponential</span></div>
+            <div class="table-wrap"><table class="dt" id="maTable"></table></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><h3>Indicator History</h3><span class="panel-sub">RSI (14) · Stochastic %K · 0–100</span></div>
+            <div class="chart-box tall"><canvas id="techChart"></canvas></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><h3>Pivot Levels</h3><span class="panel-sub">Classic / Fibonacci</span></div>
+            <div class="table-wrap"><table class="dt" id="pivotTable"></table></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><h3>Volatility &amp; Risk</h3><span class="panel-sub">Annualised</span></div>
+            <div class="table-wrap"><table class="dt" id="riskTable"></table></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><h3>Trend &amp; Momentum</h3><span class="panel-sub">Channel, ADX-style strength</span></div>
+            <div class="table-wrap"><table class="dt" id="trendTable"></table></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= FINANCIALS ================= -->
+      <section class="page" id="pg-financials" data-view="stock" data-page="financials">
+        <div class="page-head">
+          <div class="page-titles">
+            <h1>Financials</h1>
+            <p class="page-sub" id="finSub">Income statement, balance sheet and cash flow</p>
+          </div>
+          <div class="page-meta"><span class="page-stamp" id="finStamp">—</span></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-h"><h3>Income Statement</h3><span class="panel-sub">Annual · US$ millions</span></div>
+            <div class="table-wrap fin"><table class="dt fin" id="incomeTable"></table></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><h3>Balance Sheet</h3><span class="panel-sub">Annual · US$ millions</span></div>
+            <div class="table-wrap fin"><table class="dt fin" id="balanceTable"></table></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><h3>Cash Flow</h3><span class="panel-sub">Annual · US$ millions</span></div>
+            <div class="table-wrap fin"><table class="dt fin" id="cashTable"></table></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><h3>Free Cash Flow Build</h3><span class="panel-sub">Operating CF − Capex</span></div>
+            <div class="chart-box"><canvas id="fcfChart"></canvas></div>
+            <div class="table-wrap fin"><table class="dt fin" id="fcfTable"></table></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= VALUATION ================= -->
+      <section class="page" id="pg-valuation" data-view="stock" data-page="valuation">
+        <div class="page-head">
+          <div class="page-titles">
+            <h1>Valuation</h1>
+            <p class="page-sub" id="valSub">Multiples, history, intrinsic value and peers</p>
+          </div>
+          <div class="page-meta"><span class="page-stamp" id="valStamp">—</span></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-h"><h3>Valuation Multiples</h3><span class="panel-sub">Current vs 5Y range &amp; peers</span></div>
+            <div class="table-wrap"><table class="dt" id="valTable"></table></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><h3>P/E History</h3><span class="panel-sub">Trailing 12M, band = ±1σ</span></div>
+            <div class="chart-box"><canvas id="peChart"></canvas></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><h3>DCF Valuation</h3><span class="panel-sub">Two-stage model — edit inputs</span></div>
+            <div class="dcf" id="dcf"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><h3>Peer Comparison</h3><span class="panel-sub">Select metric</span></div>
+            <div class="seg small" id="peerSeg">
+              <button data-peer="pe" class="on">P/E</button>
+              <button data-peer="ps">P/S</button>
+              <button data-peer="roe">ROE</button>
+              <button data-peer="growth">Rev Growth</button>
+              <button data-peer="margin">Net Margin</button>
+            </div>
+            <div class="chart-box"><canvas id="peerChart"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= HOLDINGS ================= -->
+      <section class="page" id="pg-holdings" data-view="stock" data-page="holdings">
+        <div class="page-head">
+          <div class="page-titles">
+            <h1>Holdings</h1>
+            <p class="page-sub" id="ownSub">Ownership, institutional flow and short interest</p>
+          </div>
+          <div class="page-meta"><span class="page-stamp" id="ownStamp">—</span></div>
+        </div>
+
+        <div class="grid-3">
+          <div class="panel">
+            <div class="panel-h"><h3>Shareholder Breakdown</h3><span class="panel-sub" id="ownSub">Live 13F institutional %</span></div>
+            <div class="chart-box donut-box"><canvas id="ownChart"></canvas></div>
+            <div class="legend-list" id="ownLegend"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><h3>Institutional Position Changes</h3><span class="panel-sub" id="flowSub">Shares added vs trimmed</span></div>
+            <div class="chart-box"><canvas id="flowChart"></canvas></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><h3>Short Interest</h3><span class="panel-sub" id="shortSub">% of shares outstanding</span></div>
+            <div class="chart-box"><canvas id="shortChart"></canvas></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-h"><h3>Top Institutional Holders</h3><span class="panel-sub" id="holdersSub">13F holdings roster</span></div>
+          <div class="table-wrap"><table class="dt" id="holdersTable"></table></div>
+        </div>
+      </section>
+
+      <!-- ================= NEWS ================= -->
+      <section class="page" id="pg-news" data-view="stock" data-page="news">
+        <div class="page-head">
+          <div class="page-titles">
+            <h1>News</h1>
+            <p class="page-sub" id="newsSub">Headlines, sentiment and upcoming events</p>
+          </div>
+          <div class="page-meta"><span class="page-stamp" id="newsStamp">—</span></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-h"><h3>News Feed</h3><span class="panel-sub">Sentiment scored · newest first</span></div>
+            <div class="news-list" id="newsList"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><h3>Sentiment Trend</h3><span class="panel-sub" id="sentSub">30-day article polarity</span></div>
+            <div class="chart-box"><canvas id="sentChart"></canvas></div>
+            <div class="panel-h"><h3>Event Calendar</h3></div>
+            <div class="events" id="events"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+      <!-- ============ RIGHT RAIL ============ -->
+      <aside class="rail" id="rail">
+        <div class="panel">
+          <div class="panel-h"><h3>Analyst Consensus</h3></div>
+          <div class="consensus" id="consensus"></div>
+          <div class="rating-bars" id="ratingBars"></div>
+          <div class="price-target" id="priceTarget"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-h"><h3>Technical Signal</h3></div>
+          <div class="gauge-box"><canvas id="gaugeChart"></canvas></div>
+          <div class="gauge-label" id="gaugeLabel"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-h"><h3>Key Levels</h3></div>
+          <div class="levels" id="levels"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-h"><h3>Earnings &amp; Events</h3></div>
+          <div class="events" id="railEvents"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-h"><h3>Order Book Depth</h3><span class="panel-sub">L2 synthetic</span></div>
+          <div class="depth" id="depth"></div>
+        </div>
+      </aside>
+  </div>
+
+  <footer class="foot">
+    <span id="footNote">StockLens Terminal · Live market data via public feeds when available, simulated otherwise. Not investment advice.</span>
+    <span id="footStats"></span>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="data.js"></script>
+<script src="api.js"></script>
+<script src="charts.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
